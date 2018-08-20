@@ -47,7 +47,7 @@ post-slack() {
 }
 
 text-trim() {
-  sed 's,<p>,,g; s,</p>,,g; s,<br>,\\n,g'
+  sed 's,<p>,,g; s,</p>,,g; s,<br[ /]*>,\\n,g'
 }
 
 do_update() {
