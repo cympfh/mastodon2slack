@@ -1,0 +1,91 @@
+#!/bin/bash
+
+check-requirements() {
+  for r in curl jq; do
+    if ! which $r >/dev/null 2>&1; then
+      echo "install $r"
+      exit 1
+    fi
+  done
+}
+
+check-config() {
+  if [ ! -f config.json ]; then
+    echo "Not found config.json; Please see README.md"
+    exit 1
+  fi
+  for f in server auth slack; do
+    if [ $(jq ". | has(\"$f\")" config.json) == "false" ]; then
+      echo "Invalid config.json; Not found field $f"
+      exit 1
+    fi
+  done
+}
+
+SERVER=
+USER_TOKEN=
+SLACK_CHANNEL=
+SLACK_WEB_HOOK=
+
+load-config() {
+  SERVER=$(jq -r ".server" config.json | sed 's,\([^:]/\)/,\1,g; s,/$,,g; s,.*,https://&,g')
+  USER_TOKEN=$(jq -r ".auth.access_token" config.json)
+  SLACK_CHANNEL=$(jq -r ".slack.channel" config.json)
+  SLACK_WEB_HOOK=$(jq -r ".slack.webhook" config.json)
+}
+
+stream-from() {
+  URL="${SERVER}$1"
+  curl -sLN -XGET -H "Authorization: Bearer ${USER_TOKEN}" "$URL"
+}
+
+post-slack() {
+  tmp=$(mktemp)
+  cat >"$tmp"
+  curl -X POST --data @${tmp} "$SLACK_WEB_HOOK"
+  rm "$tmp"
+}
+
+text-trim() {
+  sed 's,<p>,,g; s,</p>,,g; s,<br>,\\n,g'
+}
+
+do_update() {
+  data="$1"
+  username=$(echo "$data" | jq -r .account.acct)
+  avatar=$(echo "$data" | jq -r .account.avatar)
+  text=$(echo "$data" | jq -r .content | text-trim)
+  cat <<EOM
+{
+  "channel": "$SLACK_CHANNEL",
+  "icon_url": "$avatar",
+  "username": "$username",
+  "text": "$text"
+}
+EOM
+}
+
+do_slack() {
+  while read -r line; do
+    if [ -z "$line" ]; then
+      continue
+    fi
+    case "$line" in
+      :thump )
+        echo "heartbeat"
+        ;;
+      "event: update" )
+        read -r line
+        data=${line#data: }
+        do_update "$data"
+        do_update "$data" | post-slack
+    esac
+  done
+}
+
+check-requirements
+check-config
+load-config
+stream-from "/api/v1/streaming/user" | do_slack
+
+# vim: set tabstop=2 shiftwidth=2 softtabstop=2 expandtab:
