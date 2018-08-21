@@ -81,6 +81,20 @@ do_notification() {
 }
 EOM
 
+  elif [ "$type" == "follow" ]; then
+
+    username=$(echo "$data" | jq -r .account.acct)
+    avatar=$(echo "$data" | jq -r .account.avatar)
+
+    cat <<EOM
+{
+  "channel": "$SLACK_CHANNEL",
+  "icon_url": "$avatar",
+  "username": "$username",
+  "text": ":exclamation: follows you"
+}
+EOM
+
   else
 
     echo "[*do_notification] $data"
