@@ -20,14 +20,24 @@ SLACK_CHANNEL=
 SLACK_WEB_HOOK=
 source config.sh
 
-if [ -z "$SERVER" -o -z "$USER_TOKEN" -o -z "$SLACK_CHANNEL" -o -z "$SLACK_WEB_HOOK" ]; then
-  echo "Invalid config.json; missing some values"
-  exit 1
-fi
+check-config() {
+  if [ -z "$SERVER" -o -z "$USER_TOKEN" -o -z "$SLACK_CHANNEL" -o -z "$SLACK_WEB_HOOK" ]; then
+    echo "Invalid config.json; missing some values"
+    exit 1
+  fi
+}
+
+check-request() {
+  if ! curl -s "${SERVER}" >/dev/null ; then
+    echo "Could not request to ${SERVER}"
+    exit 1
+  fi
+}
 
 stream-from() {
   URL="${SERVER}$1"
-  curl -sLN -XGET -H "Authorization: Bearer ${USER_TOKEN}" "$URL"
+  curl -sLN -XGET -H "Authorization: Bearer ${USER_TOKEN}" "$URL" 2>&1
+  echo
 }
 
 post-slack() {
@@ -67,11 +77,15 @@ do_slack() {
         do_update "$data"
         do_update "$data" | post-slack
         ;;
+      * )
+        echo "[*] $line"
     esac
   done
 }
 
 check-requirements
+check-config
+check-request
 stream-from "/api/v1/streaming/user" | do_slack
 
 # vim: set tabstop=2 shiftwidth=2 softtabstop=2 expandtab:
