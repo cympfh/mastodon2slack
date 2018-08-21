@@ -10,7 +10,7 @@ check-requirements() {
 }
 
 if [ ! -f config.sh ]; then
-  echo "Not found config.json; Please see README.md"
+  echo "Not found config.sh; Please see README.md"
   exit 1
 fi
 
@@ -22,7 +22,7 @@ source config.sh
 
 check-config() {
   if [ -z "$SERVER" -o -z "$USER_TOKEN" -o -z "$SLACK_CHANNEL" -o -z "$SLACK_WEB_HOOK" ]; then
-    echo "Invalid config.json; missing some values"
+    echo "Invalid config.sh; missing some values"
     exit 1
   fi
 }
