@@ -57,7 +57,7 @@ do_update() {
   "channel": "$SLACK_CHANNEL",
   "icon_url": "$avatar",
   "username": "$username",
-  "text": "$text"
+  "text": $text
 }
 EOM
 }
