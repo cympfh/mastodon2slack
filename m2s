@@ -46,15 +46,11 @@ post-slack() {
   rm "$tmp"
 }
 
-text-trim() {
-  sed 's,<p>,,g; s,</p>,,g; s,<br[ /]*>,\\n,g'
-}
-
 do_update() {
   data="$1"
   username=$(echo "$data" | jq -r .account.acct)
   avatar=$(echo "$data" | jq -r .account.avatar)
-  text=$(echo "$data" | jq -r .content | text-trim)
+  text=$(echo "$data" | jq .content)
   cat <<EOM
 {
   "channel": "$SLACK_CHANNEL",
