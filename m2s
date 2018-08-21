@@ -9,30 +9,21 @@ check-requirements() {
   done
 }
 
-check-config() {
-  if [ ! -f config.json ]; then
-    echo "Not found config.json; Please see README.md"
-    exit 1
-  fi
-  for f in server auth slack; do
-    if [ $(jq ". | has(\"$f\")" config.json) == "false" ]; then
-      echo "Invalid config.json; Not found field $f"
-      exit 1
-    fi
-  done
-}
+if [ ! -f config.sh ]; then
+  echo "Not found config.json; Please see README.md"
+  exit 1
+fi
 
 SERVER=
 USER_TOKEN=
 SLACK_CHANNEL=
 SLACK_WEB_HOOK=
+source config.sh
 
-load-config() {
-  SERVER=$(jq -r ".server" config.json | sed 's,\([^:]/\)/,\1,g; s,/$,,g; s,.*,https://&,g')
-  USER_TOKEN=$(jq -r ".auth.access_token" config.json)
-  SLACK_CHANNEL=$(jq -r ".slack.channel" config.json)
-  SLACK_WEB_HOOK=$(jq -r ".slack.webhook" config.json)
-}
+if [ -z "$SERVER" -o -z "$USER_TOKEN" -o -z "$SLACK_CHANNEL" -o -z "$SLACK_WEB_HOOK" ]; then
+  echo "Invalid config.json; missing some values"
+  exit 1
+fi
 
 stream-from() {
   URL="${SERVER}$1"
@@ -75,13 +66,12 @@ do_slack() {
         data=${line#data: }
         do_update "$data"
         do_update "$data" | post-slack
+        ;;
     esac
   done
 }
 
 check-requirements
-check-config
-load-config
 stream-from "/api/v1/streaming/user" | do_slack
 
 # vim: set tabstop=2 shiftwidth=2 softtabstop=2 expandtab:
