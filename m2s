@@ -62,7 +62,7 @@ do_update() {
   # attach images
   append=$(
     echo "$data" |
-      jq -r '.media_attachments | map("\\n+ \(.text_url)") | join("")')
+      jq -r '.media_attachments | map("\\n+ \(if .text_url != null then .text_url else .remote_url end)") | join("")')
   if [ ! -z "$append" ]; then
     text="$text $append"
   fi
