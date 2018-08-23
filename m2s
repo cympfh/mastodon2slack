@@ -130,9 +130,17 @@ do_slack() {
   done
 }
 
+main() {
+  while :; do
+    echo "[=] start"
+    stream-from "/api/v1/streaming/user" | do_slack
+    echo "[=] stream stopped"
+  done
+}
+
 check-requirements
 check-config
 check-request
-stream-from "/api/v1/streaming/user" | do_slack
+main
 
 # vim: set tabstop=2 shiftwidth=2 softtabstop=2 expandtab:
