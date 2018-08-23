@@ -47,17 +47,23 @@ post-slack() {
   rm "$tmp"
 }
 
+html-text-trim() {
+  cat |
+    sed 's/<br[^>]*>/\\n/g' |
+    sed 's/<[^>]*>//g' | sed 's/"/\\"/g'
+}
+
 do_update() {
   data="$1"
   username=$(echo "$data" | jq -r .account.acct)
   avatar=$(echo "$data" | jq -r .account.avatar)
-  text=$(echo "$data" | jq .content)
+  text=$(echo "$data" | jq -r .content | html-text-trim)
   cat <<EOM
 {
   "channel": "$SLACK_CHANNEL",
   "icon_url": "$avatar",
   "username": "$username",
-  "text": $text
+  "text": "$text"
 }
 EOM
 }
@@ -70,14 +76,14 @@ do_notification() {
 
     username=$(echo "$data" | jq -r .account.acct)
     avatar=$(echo "$data" | jq -r .account.avatar)
-    text=$(echo "$data" | jq .status.content)
+    text=$(echo "$data" | jq -r .status.content | html-text-trim)
 
     cat <<EOM
 {
   "channel": "$SLACK_CHANNEL",
-  "icon_emoji": ":star:",
+  "icon_url": "$avatar",
   "username": "$username",
-  "text": $text
+  "text": ":star: $text"
 }
 EOM
 
