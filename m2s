@@ -58,6 +58,15 @@ do_update() {
   username=$(echo "$data" | jq -r .account.acct)
   avatar=$(echo "$data" | jq -r .account.avatar)
   text=$(echo "$data" | jq -r .content | html-text-trim)
+
+  # attach images
+  append=$(
+    echo "$data" |
+      jq -r '.media_attachments | map("\\n+ \(.text_url)") | join("")')
+  if [ ! -z "$append" ]; then
+    text="$text $append"
+  fi
+
   cat <<EOM
 {
   "channel": "$SLACK_CHANNEL",
