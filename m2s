@@ -58,6 +58,11 @@ do_update() {
   username=$(echo "$data" | jq -r .account.acct)
   avatar=$(echo "$data" | jq -r .account.avatar)
   text=$(echo "$data" | jq -r .content | html-text-trim)
+  spoiler=$(echo "$data" | jq -r .spoiler_text | html-text-trim)
+
+  if [ ! -z "$spoiler" ]; then
+    text="$spoiler\\n:bangbang: $text"
+  fi
 
   # attach images
   append=$(
@@ -145,6 +150,18 @@ do_slack() {
   done
 }
 
+report-hash() {
+text=$(git rev-parse HEAD)
+  cat <<EOM | post-slack
+{
+  "channel": "$SLACK_CHANNEL",
+  "icon_emoji": ":information_source:",
+  "username": "info",
+  "text": "$text"
+}
+EOM
+}
+
 main() {
   while :; do
     echo "[=] start"
@@ -156,6 +173,7 @@ main() {
 check-requirements
 check-config
 check-request
+report-hash
 main
 
 # vim: set tabstop=2 shiftwidth=2 softtabstop=2 expandtab:
