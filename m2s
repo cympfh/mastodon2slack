@@ -1,5 +1,21 @@
 #!/bin/bash
 
+usage() {
+cat <<EOM
+USAGE
+  m2s [--user] [--public] [--local]
+
+OPTIONS
+  --user
+    streaming user timeline
+  --public
+    streaming public timeline
+  --local
+    streaming (public) local timeline
+EOM
+  exit
+}
+
 check-requirements() {
   for r in curl jq; do
     if ! which $r >/dev/null 2>&1; then
@@ -167,7 +183,7 @@ EOM
 main() {
   while :; do
     echo "[=] start"
-    stream-from "/api/v1/streaming/user" | do_slack
+    stream-from "$1" | do_slack
     echo "[=] stream stopped"
   done
 }
@@ -176,6 +192,27 @@ check-requirements
 check-config
 check-request
 report-hash
-main
+
+if [ $# -gt 0 ]; then
+  case "$1" in
+    --help | -h )
+      usage
+      ;;
+    --user )
+      main "/api/v1/streaming/user" | do_slack
+      ;;
+    --public )
+      main "/api/v1/streaming/public" | do_slack
+      ;;
+    --local )
+      main "/api/v1/streaming/public/local" | do_slack
+      ;;
+    * )
+      usage
+      ;;
+  esac
+fi
+
+usage
 
 # vim: set tabstop=2 shiftwidth=2 softtabstop=2 expandtab:
