@@ -66,6 +66,7 @@ post-slack() {
 html-text-trim() {
   cat |
     sed 's/<br[^>]*>/\\n/g' |
+    sed 's,</p><p>,\\n,g' |
     sed 's/<[^>]*>//g' |
     html-encode -d |
     sed 's/"/\\"/g'
@@ -74,6 +75,7 @@ html-text-trim() {
 do_update() {
   data="$1"
   username=$(echo "$data" | jq -r .account.acct)
+  display_name=$(echo "$data" | jq -r .account.display_name)
   avatar=$(echo "$data" | jq -r .account.avatar)
   text=$(echo "$data" | jq -r .content | html-text-trim)
   spoiler=$(echo "$data" | jq -r .spoiler_text | html-text-trim)
@@ -94,7 +96,7 @@ do_update() {
 {
   "channel": "$SLACK_CHANNEL",
   "icon_url": "$avatar",
-  "username": "$username",
+  "username": "$display_name @$username",
   "text": "$text"
 }
 EOM
