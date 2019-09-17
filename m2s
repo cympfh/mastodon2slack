@@ -137,7 +137,7 @@ EOM
 
   else
 
-    echo "[*do_notification] $data"
+    echo "[= $(date)] do_notification: $data"
 
   fi
 
@@ -165,7 +165,7 @@ do_slack() {
         do_notification "$data" | post-slack
         ;;
       * )
-        echo "[*] $line"
+        echo "[* $(date)] $line"
     esac
   done
 }
@@ -184,9 +184,9 @@ EOM
 
 main() {
   while :; do
-    echo "[=] start"
+    echo "[= $(date)] start"
     stream-from "$1" | do_slack
-    echo "[=] stream stopped"
+    echo "[= $(date)] stream stopped"
   done
 }
 
